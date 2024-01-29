@@ -1,0 +1,3 @@
+[submodule "renseq_mapping"]
+	path = renseq_mapping
+	url = https://github.com/swiftseal/renseq_mapping
