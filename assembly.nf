@@ -83,32 +83,32 @@ process Getorf {
     """
 }
 
-process GetBed {
-    container 'quay.io/biocontainers/biopython:1.73'
-    cpus 1
-    memory { 1.GB * task.attempt }
-    errorStrategy { task.exitStatus == 137 ? 'retry' : 'finish' }
-    queue 'short'
-    input:
-    path orfs
-    output:
-    path '${orfs.baseName}.bed'
-    script:
-    """
-    #!/usr/bin/env python
-    from Bio import SeqIO
-    with open("${orfs.baseName}.bed", "w") as f:
-        for record in SeqIO.parse(${orfs}, "fasta"):
-            # Header format is >seqid_\d+ [start - end] {optionally (REVERSE SENSE)} ...
-            match = re.match(r"^(.*?)_(\d+) \[(\d+) - (\d+)\]", record.description)
-            sense = re.search(r".*REVERSE SENSE.*", record.description)
-            if sense:
-                f.write(f"{match.group(1)}\t{match.group(4)}\t{match.group(3)}\t{match.group(1)}_{match.group(2)}\t0\t-\n")
-            else:
-                f.write(f"{match.group(1)}\t{match.group(3)}\t{match.group(4)}\t{match.group(1)}_{match.group(2)}\t0\t+\n")
-    """
-
-}
+//process GetBed {
+//    container 'quay.io/biocontainers/biopython:1.73'
+//    cpus 1
+//    memory { 1.GB * task.attempt }
+//    errorStrategy { task.exitStatus == 137 ? 'retry' : 'finish' }
+//    queue 'short'
+//    input:
+//    path orfs
+//    output:
+//    path '${orfs.baseName}.bed'
+//    script:
+//    """
+//    #!/usr/bin/env python
+//    from Bio import SeqIO
+//    with open("${orfs.baseName}.bed", "w") as f:
+//        for record in SeqIO.parse("${orfs}", "fasta"):
+//            # Header format is >seqid_\d+ [start - end] {optionally (REVERSE SENSE)} ...
+//            match = re.match(r"^(.*?)_(\d+) \[(\d+) - (\d+)\]", record.description)
+//            sense = re.search(r".*REVERSE SENSE.*", record.description)
+//            if sense:
+//                f.write(f"{match.group(1)}\t{match.group(4)}\t{match.group(3)}\t{match.group(1)}_{match.group(2)}\t0\t-\n")
+//            else:
+//                f.write(f"{match.group(1)}\t{match.group(3)}\t{match.group(4)}\t{match.group(1)}_{match.group(2)}\t0\t+\n")
+//    """
+//
+//}
 
 process Hmmsearch {
     container 'quay.io/biocontainers/hmmer:3.4--hdbdd923_1'
