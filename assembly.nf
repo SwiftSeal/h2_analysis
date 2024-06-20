@@ -1,4 +1,5 @@
 process Hifiasm {
+    publishDir 'assembly', mode: 'copy'
     container 'quay.io/biocontainers/hifiasm:0.19.9--h43eeafb_0'
     cpus 8
     memory { 32.GB * task.attempt }
@@ -16,6 +17,7 @@ process Hifiasm {
 }
 
 process Flye {
+    publishDir 'assembly', mode: 'copy'
     container 'quay.io/biocontainers/flye:2.9.4--py38he0f268d_0'
     cpus 8
     memory { 32.GB * task.attempt }
@@ -32,6 +34,7 @@ process Flye {
 }
 
 process Canu {
+    publishDir 'assembly', mode: 'copy'
     container 'quay.io/biocontainers/canu:2.2--ha47f30e_0'
     cpus 8
     memory { 32.GB * task.attempt }
