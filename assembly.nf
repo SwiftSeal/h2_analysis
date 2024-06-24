@@ -12,7 +12,7 @@ process Hifiasm {
     script:
     """
     hifiasm -o hifiasm -t 8 ${reads}
-    awk '/^S/{print ">"\$2;print \$3}' hifiasm.p_ctg.gfa > hifiasm.fa
+    awk '/^S/{print ">"\$2;print \$3}' hifiasm.bp.p_ctg.gfa > hifiasm.fa
     """
 }
 
@@ -26,10 +26,11 @@ process Flye {
     input:
     path reads
     output:
-    path 'flye/assembly.fasta'
+    path 'flye.fa'
     script:
     """
     flye --pacbio-hifi ${reads} --out-dir flye
+    mv flye/assembly.fasta flye.fa
     """
 }
 
@@ -37,16 +38,17 @@ process Canu {
     publishDir 'assembly', mode: 'copy'
     container 'quay.io/biocontainers/canu:2.2--ha47f30e_0'
     cpus 8
-    memory { 32.GB * task.attempt }
+    memory { 36.GB * task.attempt }
     errorStrategy { task.exitStatus == 137 ? 'retry' : 'finish' }
     queue 'medium'
     input:
     path reads
     output:
-    path 'canu/canu.contigs.fasta'
+    path 'canu.fa'
     script:
     """
     canu -p canu -d canu genomeSize=100m useGrid=false maxInputCoverage=20000 batMemory=32g -pacbio-hifi ${reads}
+    mv canu/canu.contigs.fasta canu.fa
     """
 }
 
