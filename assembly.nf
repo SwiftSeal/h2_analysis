@@ -70,7 +70,7 @@ process Coverm {
     """
 }
 
-process Getorf {
+process GetOrf {
     container 'quay.io/biocontainers/emboss:6.5.7--2'
     publishDir 'assembly', mode: 'copy'
     cpus 4
@@ -137,19 +137,18 @@ process Hmmsearch {
 
 workflow {
     hifiReads = file("p557.fastq.gz")
+    nbarcHmmer = file("PF00931.hmm")
 
     hifiasmAssembly = Hifiasm(hifiReads)
-    hifiasmOrfs = Getorf(hifiasmAssembly)
-    hifiasmNbarcFasta = Hmmsearch(hifiasmOrfs, "PF00931.hmm")
-    Coverm(hifiasmAssembly, hifiReads)
-
     flyeAssembly = Flye(hifiReads)
-    flyeOrfs = Getorf(flyeAssembly)
-    flyeNbarcFasta = Hmmsearch(flyeOrfs, "PF00931.hmm")
-    Coverm(flyeAssembly, hifiReads)
-
     canuAssembly = Canu(hifiReads)
-    canuOrfs = Getorf(canuAssembly)
-    canuNbarcFasta = Hmmsearch(canuOrfs, "PF00931.hmm")
-    Coverm(canuAssembly, hifiReads)
+
+    assemblies = Channel.of(hifiasmAssembly, flyeAssembly, canuAssembly)
+
+    assemblies
+        .Coverm(hifiReads)
+
+    assemblies
+        .GetOrf()
+        .Hmmsearch(nbarcHmmer)
 }
