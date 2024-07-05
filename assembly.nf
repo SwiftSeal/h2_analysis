@@ -126,9 +126,9 @@ process Hmmsearch {
     path orfs
     path nbarc
     output:
-    path "${orfs.baseName}.hmmsearch.tsv"
-    path "${orfs.baseName}.hmmsearch.msa"
-    path "${nbarc.baseName}.hmmsearch.fa"
+    path "${orfs.simpleName}.hmmsearch.tsv"
+    path "${orfs.simpleName}.hmmsearch.msa"
+    path "${orfs.simpleName}.hmmsearch.fa"
     script:
     """
     hmmsearch -A ${orfs.simpleName}.hmmsearch.msa --tblout ${orfs.simpleName}.hmmsearch.tsv PF00931.hmm ${orfs}
