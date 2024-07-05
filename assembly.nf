@@ -70,7 +70,7 @@ process Coverm {
 }
 
 process Getorf {
-    container 'quay.io/biocontainers/emboss:5.0.0--ha6fa2df_5'
+    container 'quay.io/biocontainers/emboss:6.5.7--2'
     cpus 4
     memory { 8.GB * task.attempt }
     errorStrategy { task.exitStatus == 137 ? 'retry' : 'finish' }
@@ -113,7 +113,7 @@ process Getorf {
 //}
 
 process Hmmsearch {
-    container 'quay.io/biocontainers/hmmer:3.4--hdbdd923_1'
+    container 'quay.io/biocontainers/hmmer:3.1b2--1'
     cpus 4
     memory { 4.GB * task.attempt }
     errorStrategy { task.exitStatus == 137 ? 'retry' : 'finish' }
@@ -139,7 +139,6 @@ workflow {
     hifiasmOrfs = Getorf(hifiasmAssembly)
     hifiasmNbarcFasta = Hmmsearch(hifiasmOrfs, "PF00931.hmm")
     Coverm(hifiasmAssembly, hifiReads)
-
 
     flyeAssembly = Flye(hifiReads)
     flyeOrfs = Getorf(flyeAssembly)
