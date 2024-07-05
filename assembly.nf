@@ -54,6 +54,7 @@ process Canu {
 
 process Coverm {
     container 'quay.io/biocontainers/coverm:0.7.0--h07ea13f_1'
+    publishDir 'assembly', mode: 'copy'
     cpus 4
     memory { 8.GB * task.attempt }
     errorStrategy { task.exitStatus == 137 ? 'retry' : 'finish' }
@@ -71,6 +72,7 @@ process Coverm {
 
 process Getorf {
     container 'quay.io/biocontainers/emboss:6.5.7--2'
+    publishDir 'assembly', mode: 'copy'
     cpus 4
     memory { 8.GB * task.attempt }
     errorStrategy { task.exitStatus == 137 ? 'retry' : 'finish' }
@@ -114,6 +116,7 @@ process Getorf {
 
 process Hmmsearch {
     container 'quay.io/biocontainers/hmmer:3.1b2--1'
+    publishDir 'assembly', mode: 'copy'
     cpus 4
     memory { 4.GB * task.attempt }
     errorStrategy { task.exitStatus == 137 ? 'retry' : 'finish' }
