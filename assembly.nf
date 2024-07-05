@@ -63,7 +63,7 @@ process Coverm {
     path assembly
     path reads
     output:
-    path '${assembly.simpleName}.coverage.tsv'
+    path "${assembly.simpleName}.coverage.tsv"
     script:
     """
     coverm contig --single ${reads} -r ${assembly} -m mean length -p minimap2-hifi -o ${assembly.simpleName}.coverage.tsv
@@ -80,7 +80,7 @@ process GetOrf {
     input:
     path assembly
     output:
-    path '${assembly.simpleName}.orf.fa'
+    path "${assembly.simpleName}.orf.fa"
     script:
     """
     getorf -sequence ${assembly} -outseq ${assembly.simpleName}.orf.fa
@@ -114,8 +114,9 @@ process GetOrf {
 //
 //}
 
+// need to use the conda distribution of hmmer as the container does not come with esl-reformat
 process Hmmsearch {
-    container 'quay.io/biocontainers/hmmer:3.1b2--1'
+    conda 'hmmer'
     publishDir 'assembly', mode: 'copy'
     cpus 4
     memory { 4.GB * task.attempt }
@@ -125,30 +126,29 @@ process Hmmsearch {
     path orfs
     path nbarc
     output:
-    path '${orfs.baseName}.hmmsearch.tsv'
-    path '${orfs.baseName}.hmmsearch.fa'
-    path '${nbarc.baseName}.hmmsearch.seq.fa'
+    path "${orfs.baseName}.hmmsearch.tsv"
+    path "${orfs.baseName}.hmmsearch.msa"
+    path "${nbarc.baseName}.hmmsearch.fa"
     script:
     """
-    hmmsearch -A ${orfs.simpleName}.hmmsearch.fa --tblout ${orfs.simpleName}.hmmsearch.tsv PF00931.hmm ${orfs}
-    esl-reformat fasta ${orfs.simpleName}.hmmsearch.fa > ${orfs.simpleName}.hmmsearch.seq.fa
+    hmmsearch -A ${orfs.simpleName}.hmmsearch.msa --tblout ${orfs.simpleName}.hmmsearch.tsv PF00931.hmm ${orfs}
+    esl-reformat fasta ${orfs.simpleName}.hmmsearch.msa > ${orfs.simpleName}.hmmsearch.fa
     """
 }
 
 workflow {
-    hifiReads = file("p557.fastq.gz")
-    nbarcHmmer = file("PF00931.hmm")
+    hifiReads = channel.fromPath("p557.fastq.gz")
+    nbarcHmmer = channel.fromPath("PF00931.hmm")
 
     hifiasmAssembly = Hifiasm(hifiReads)
     flyeAssembly = Flye(hifiReads)
     canuAssembly = Canu(hifiReads)
 
-    assemblies = Channel.of(hifiasmAssembly, flyeAssembly, canuAssembly)
+    assemblies = hifiasmAssembly.concat(flyeAssembly, canuAssembly)
 
-    assemblies
-        .Coverm(hifiReads)
+    Coverm(assemblies, hifiReads.first())
 
-    assemblies
-        .GetOrf()
-        .Hmmsearch(nbarcHmmer)
+    GetOrf(assemblies)
+    
+    Hmmsearch(GetOrf.out, nbarcHmmer.first())
 }
