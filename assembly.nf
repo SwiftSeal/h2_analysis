@@ -62,10 +62,10 @@ process Coverm {
     path assembly
     path reads
     output:
-    path '${assembly.baseName}.coverage.tsv'
+    path '${assembly.simpleName}.coverage.tsv'
     script:
     """
-    coverm contig --single ${reads} -r ${assembly} -m mean length -p minimap2-hifi -o ${assembly.baseName}.coverage.tsv
+    coverm contig --single ${reads} -r ${assembly} -m mean length -p minimap2-hifi -o ${assembly.simpleName}.coverage.tsv
     """
 }
 
@@ -78,10 +78,10 @@ process Getorf {
     input:
     path assembly
     output:
-    path '${assembly.baseName}.orf.fa'
+    path '${assembly.simpleName}.orf.fa'
     script:
     """
-    getorf -sequence ${assembly} -outseq ${assembly.baseName}.orf.fa
+    getorf -sequence ${assembly} -outseq ${assembly.simpleName}.orf.fa
     """
 }
 
@@ -124,33 +124,30 @@ process Hmmsearch {
     output:
     path '${orfs.baseName}.hmmsearch.tsv'
     path '${orfs.baseName}.hmmsearch.fa'
+    path '${nbarc.baseName}.hmmsearch.seq.fa'
     script:
     """
-    hmmsearch -A ${orfs.baseName}.hmmsearch.fa --tblout ${orfs.baseName}.hmmsearch.tsv PF00931.hmm ${orfs}
+    hmmsearch -A ${orfs.simpleName}.hmmsearch.fa --tblout ${orfs.simpleName}.hmmsearch.tsv PF00931.hmm ${orfs}
+    esl-reformat fasta ${orfs.simpleName}.hmmsearch.fa > ${orfs.simpleName}.hmmsearch.seq.fa
     """
-
-process GetFasta {
-    container 'quay.io/biocontainers/hmmer:3.4--hdbdd923_1'
-    cpus 1
-    memory { 1.GB * task.attempt }
-    errorStrategy { task.exitStatus == 137 ? 'retry' : 'finish' }
-    queue 'short'
-    input:
-    path hmmsearch
-    output:
-    path '${hmmsearch.baseName}.hmmsearch.seq.fa'
-    script:
-    """
-    esl-reformat fasta ${hmmsearch} > ${hmmsearch.baseName}.hmmsearch.seq.fa
-    """
-}
-
 }
 
 workflow {
     hifiReads = file("p557.fastq.gz")
 
     hifiasmAssembly = Hifiasm(hifiReads)
+    hifiasmOrfs = Getorf(hifiasmAssembly)
+    hifiasmNbarcFasta = Hmmsearch(hifiasmOrfs, "PF00931.hmm")
+    Coverm(hifiasmAssembly, hifiReads)
+
+
     flyeAssembly = Flye(hifiReads)
+    flyeOrfs = Getorf(flyeAssembly)
+    flyeNbarcFasta = Hmmsearch(flyeOrfs, "PF00931.hmm")
+    Coverm(flyeAssembly, hifiReads)
+
     canuAssembly = Canu(hifiReads)
+    canuOrfs = Getorf(canuAssembly)
+    canuNbarcFasta = Hmmsearch(canuOrfs, "PF00931.hmm")
+    Coverm(canuAssembly, hifiReads)
 }
