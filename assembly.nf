@@ -147,10 +147,10 @@ process RefPlantNlrBlast {
     path refplantnlr
     path fa
     output:
-    path "${orfs.simpleName}.refplantnlr.tsv"
+    path "${fa.simpleName}.refplantnlr.tsv"
     script:
     """
-    blastp -query ${refplantnlr} -subject ${fa} -outfmt 6
+    blastp -query ${refplantnlr} -subject ${fa} -outfmt 6 > ${fa.simpleName}.refplantnlr.tsv
     """
 }
 
