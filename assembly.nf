@@ -126,9 +126,9 @@ process Hmmsearch {
     path orfs
     path nbarc
     output:
-    path "${orfs.simpleName}.hmmsearch.tsv"
-    path "${orfs.simpleName}.hmmsearch.msa"
-    path "${orfs.simpleName}.hmmsearch.fa"
+    path "${orfs.simpleName}.hmmsearch.tsv", emit: tsv
+    path "${orfs.simpleName}.hmmsearch.msa", emit: msa
+    path "${orfs.simpleName}.hmmsearch.fa", emit: fa
     script:
     """
     hmmsearch -A ${orfs.simpleName}.hmmsearch.msa --tblout ${orfs.simpleName}.hmmsearch.tsv PF00931.hmm ${orfs}
@@ -136,9 +136,28 @@ process Hmmsearch {
     """
 }
 
+process RefPlantNlrBlast {
+    container 'quay.io/biocontainers/blast:2.15.0--pl5321h6f7f691_0'
+    publishDir 'assembly', mode: 'copy'
+    cpus 2
+    memory { 4.GB * task.attempt }
+    errorStrategy { task.exitStatus == 137 ? 'retry' : 'finish' }
+    queue 'short'
+    input:
+    path refplantnlr
+    path fa
+    output:
+    path "${orfs.simpleName}.refplantnlr.tsv"
+    script:
+    """
+    blastp -query ${refplantnlr} -subject ${fa} -outfmt 6
+    """
+}
+
 workflow {
     hifiReads = channel.fromPath("p557.fastq.gz")
     nbarcHmmer = channel.fromPath("PF00931.hmm")
+    refPlantNlr = channel.fromPath("refplantnlr.fa")
 
     hifiasmAssembly = Hifiasm(hifiReads)
     flyeAssembly = Flye(hifiReads)
@@ -151,4 +170,6 @@ workflow {
     GetOrf(assemblies)
     
     Hmmsearch(GetOrf.out, nbarcHmmer.first())
+
+    RefPlantNlrBlast(refPlantNlr.first(), Hmmsearch.out.fa)
 }
